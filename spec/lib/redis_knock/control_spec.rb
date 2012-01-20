@@ -15,7 +15,19 @@ describe RedisKnock::Control do
   let(:redis_options) { { :host => host, :port => port, :db => db } }
   let(:options)       { { :limit => limit, :interval => interval, :redis => redis_options } }
 
-  context 'invalid arguments validation' do
+  describe 'converting hash keys to symbols' do
+    it 'serializes all attributes recursively' do
+      args = { 'limit' => limit, 'interval' => interval, 'redis' => { 'host' => host, 'port' => port, 'db' => db } }
+
+      Redis.should_receive(:new).with(redis_options).and_return(redis_client)
+
+      control = subject.new args
+      control.instance_variable_get('@limit').should == limit
+      control.instance_variable_get('@interval').should == interval
+    end
+  end
+
+  describe 'invalid arguments validation' do
     it 'raises ArgumentError if limit is not informed' do
       options.delete :limit
 
@@ -61,7 +73,7 @@ describe RedisKnock::Control do
     end
   end
 
-  context 'when cannot connect to Redis server' do
+  describe 'when cannot connect to Redis server' do
     it 'raises ConnectionError' do
       Redis.should_receive(:new).and_raise('An error')
 
@@ -70,7 +82,7 @@ describe RedisKnock::Control do
     end
   end
 
-  context 'checking for allowed requests' do
+  describe 'checking for allowed requests' do
     before :each do
       Redis.should_receive(:new).with(redis_options).and_return(redis_client)
     end

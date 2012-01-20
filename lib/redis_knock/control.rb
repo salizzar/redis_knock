@@ -2,7 +2,8 @@
 
 module RedisKnock
   class Control
-    def initialize(options)
+    def initialize(args)
+      options = convert_keys_to_symbols args
       check! options
 
       @client = get_connection options[:redis]
@@ -20,6 +21,14 @@ module RedisKnock
     end
 
     private
+
+    def convert_keys_to_symbols(args)
+      args.keys.inject({}) do |hash, key|
+        value = args[key]
+        hash[key.to_sym] = value.is_a?(Hash) ? convert_keys_to_symbols(value) : value
+        hash
+      end
+    end
 
     def check!(options)
       raise ArgumentError.new('A limit must be supplied') if options[:limit].nil?
